@@ -142,15 +142,29 @@ public class UserManagementController {
      * @RequestBody :
      * Convertit le JSON en objet OurUsers.
      */
+
     @PutMapping("/admin/update/{userId}")
     public ResponseEntity<OurUserDto> updateUser(
             @PathVariable Integer userId,
-            @RequestBody OurUsers reqres){
+            @RequestBody OurUsers reqres,
+            Authentication authentication){
 
         return ResponseEntity.ok(
-                usersManagementService.updateUser(userId, reqres)
+                usersManagementService.updateUser(userId, reqres, authentication)
         );
     }
+
+
+
+//    @PutMapping("/admin/update/{userId}")
+//    public ResponseEntity<OurUserDto> updateUser(
+//            @PathVariable Integer userId,
+//            @RequestBody OurUsers reqres){
+//
+//        return ResponseEntity.ok(
+//                usersManagementService.updateUser(userId, reqres)
+//        );
+//    }
 
 
     /*

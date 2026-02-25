@@ -14,6 +14,7 @@ import com.elitepro.usermanagementsystem.utils.JWTUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -283,7 +284,7 @@ public class UsersManagementService {
      * MISE À JOUR UTILISATEUR
      * ================================
      */
-    public OurUserDto updateUser(Integer userId, OurUsers updatedUser) {
+    public OurUserDto updateUser(Integer userId, OurUsers updatedUser, Authentication authentication) {
 
         OurUserDto ourUserDto = new OurUserDto();
 
@@ -294,13 +295,15 @@ public class UsersManagementService {
 
                 OurUsers existingUser = userOptional.get();
 
-                // Mise à jour des champs
+                // 🔹 Sauvegarder l'ancien email (important)
+                String oldEmail = existingUser.getEmail();
+
+                // 🔹 Mise à jour des champs
                 existingUser.setEmail(updatedUser.getEmail());
                 existingUser.setName(updatedUser.getName());
                 existingUser.setCity(updatedUser.getCity());
                 existingUser.setRole(updatedUser.getRole());
 
-                // Mise à jour du mot de passe seulement si présent
                 if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
                     existingUser.setPassword(
                             passwordEncoder.encode(updatedUser.getPassword())
@@ -312,6 +315,17 @@ public class UsersManagementService {
                 ourUserDto.setOurUsers(savedUser);
                 ourUserDto.setStatusCode(200);
                 ourUserDto.setMessage("User updated successfully");
+
+                // 🔥 Vérifier si l'utilisateur modifié est celui connecté
+                String currentEmail = authentication.getName();
+
+                if (currentEmail.equals(oldEmail)) {
+
+                    // 🔥 Générer un nouveau token avec le nouvel email
+                    String newToken = jwtUtils.generateToken(savedUser);
+
+                    ourUserDto.setToken(newToken);
+                }
 
             } else {
                 ourUserDto.setStatusCode(404);
@@ -325,6 +339,51 @@ public class UsersManagementService {
 
         return ourUserDto;
     }
+
+
+
+//    public OurUserDto updateUser(Integer userId, OurUsers updatedUser) {
+//
+//        OurUserDto ourUserDto = new OurUserDto();
+//
+//        try {
+//            Optional<OurUsers> userOptional = ourUsersRepository.findById(userId);
+//
+//            if (userOptional.isPresent()) {
+//
+//                OurUsers existingUser = userOptional.get();
+//
+//                // Mise à jour des champs
+//                existingUser.setEmail(updatedUser.getEmail());
+//                existingUser.setName(updatedUser.getName());
+//                existingUser.setCity(updatedUser.getCity());
+//                existingUser.setRole(updatedUser.getRole());
+//
+//                // Mise à jour du mot de passe seulement si présent
+//                if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+//                    existingUser.setPassword(
+//                            passwordEncoder.encode(updatedUser.getPassword())
+//                    );
+//                }
+//
+//                OurUsers savedUser = ourUsersRepository.save(existingUser);
+//
+//                ourUserDto.setOurUsers(savedUser);
+//                ourUserDto.setStatusCode(200);
+//                ourUserDto.setMessage("User updated successfully");
+//
+//            } else {
+//                ourUserDto.setStatusCode(404);
+//                ourUserDto.setMessage("User not found for update");
+//            }
+//
+//        } catch (Exception e) {
+//            ourUserDto.setStatusCode(500);
+//            ourUserDto.setMessage("Error occurred while updating user: " + e.getMessage());
+//        }
+//
+//        return ourUserDto;
+//    }
 
 
     /*
